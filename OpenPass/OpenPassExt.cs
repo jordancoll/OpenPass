@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
-using KeePass.Ecas;
 using KeePass.Plugins;
 using KeePass.Resources;
+using KeePass.UI;
 using KeePass.Util;
 using KeePassLib;
 
@@ -13,9 +11,9 @@ namespace OpenPass
 {
     public class OpenPassExt : Plugin
     {
-        private IPluginHost host;
-        private StreamWriter log;
-        private ToolStripMenuItem ctxOpenAndType;
+        protected IPluginHost host;
+        protected StreamWriter log;
+        protected ToolStripMenuItem ctxOpenAndType;
 
         public override bool Initialize(IPluginHost host)
         {
@@ -27,35 +25,66 @@ namespace OpenPass
             }
             catch { }
 
-            var urlMenu = host.MainWindow.EntryContextMenu.Items["m_ctxEntryUrl"] as ToolStripMenuItem;
-            if (urlMenu == null)
+            if (!CreateMenuItem())
             {
-                log.WriteLine("Couldn't find URL(s)");
-               
                 return false;
             }
 
+            RegisterKeyboardShortcut();
+
             log.WriteLine("inited");
-
-            ctxOpenAndType = new ToolStripMenuItem(KPRes.OpenCmd + " + " + KPRes.AutoType);
-            ctxOpenAndType.ShortcutKeyDisplayString = KPRes.KeyboardKeyCtrl + "+" + KPRes.KeyboardKeyAlt + "+U";
-
-            ctxOpenAndType.Enabled = CanOpenAndType;
-            ctxOpenAndType.ShowShortcutKeys = true;
-            ctxOpenAndType.Click += onClick;
-            urlMenu.DropDownItems.Insert(1, ctxOpenAndType);
-            urlMenu.DropDownOpening += urlMenu_DropDownOpening;
-
-            log.WriteLine("done stuff");
-
-            //KeePass.UI.UIUtil.ConfigureTbButton(openAndTypeMenuItem, "Open and Auto-Type", null);
 
             return true;
         }
 
-        void urlMenu_DropDownOpening(object sender, EventArgs e)
+        private bool CreateMenuItem()
         {
+            var urlMenu = host.MainWindow.EntryContextMenu.Items["m_ctxEntryUrl"] as ToolStripMenuItem;
+            if (urlMenu == null)
+            {
+                log.WriteLine("Couldn't find URL(s)");
+
+                return false;
+            }
+
+            ctxOpenAndType = new ToolStripMenuItem(KPRes.OpenCmd + " + " + KPRes.AutoType);
+
             ctxOpenAndType.Enabled = CanOpenAndType;
+            ctxOpenAndType.ShowShortcutKeys = true;
+            ctxOpenAndType.Click += delegate(object sender, EventArgs e) { OpenAndAutoType(); };
+            urlMenu.DropDownItems.Insert(1, ctxOpenAndType);
+            urlMenu.DropDownOpening += delegate(object sender, EventArgs e) { ctxOpenAndType.Enabled = CanOpenAndType; };
+            UIUtil.AssignShortcut(ctxOpenAndType, Keys.Control | Keys.Alt | Keys.U);
+
+            return true;
+        }
+
+        private void RegisterKeyboardShortcut()
+        {
+            var listView = host.MainWindow.Controls.Find("m_lvEntries", true);
+            if (listView.Length != 1)
+            {
+                log.WriteLine("Couldn't add keyboard shortcut, m_lvEntries count=" + listView.Length);
+            }
+            else
+            {
+                log.WriteLine("added keydown event");
+                listView[0].KeyDown +=
+                    delegate(object sender, KeyEventArgs e)
+                    {
+                        if (e.KeyData == (Keys.Control | Keys.Y))
+                        {
+                            OpenAndAutoType();
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+
+                        }
+                        else
+                        {
+                            e.Handled = false;
+                        }
+                    };
+            }
         }
 
         public override void Terminate()
@@ -74,18 +103,18 @@ namespace OpenPass
             log.AutoFlush = true;
         }
 
-        private bool CanOpenAndType
+        protected bool CanOpenAndType
         {
             get
             {
                 var mw = host.MainWindow;
                 var selectedEntry = mw.GetSelectedEntry(true);
                 return (mw.ActiveDatabase.IsOpen) && (mw.GetSelectedEntriesCount() == 1) && (selectedEntry != null) &&
-                    (!selectedEntry.Strings.GetSafe(PwDefs.UrlField).IsEmpty);
+                    (!selectedEntry.Strings.GetSafe(PwDefs.UrlField).IsEmpty) && (selectedEntry.GetAutoTypeEnabled());
             }
         }
 
-        private void onClick(object sender, EventArgs e)
+        protected void OpenAndAutoType()
         {
             var entry = host.MainWindow.GetSelectedEntry(true);
             if (CanOpenAndType && entry != null)
@@ -101,7 +130,6 @@ namespace OpenPass
                     log.WriteLine("ERROR: " + ex.Message + ";\n" + ex.StackTrace);
                 }
             }
-            
         }
     }
 }
