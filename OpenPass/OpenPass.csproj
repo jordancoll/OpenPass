@@ -7,8 +7,8 @@
     <ProjectGuid>{4AF9AD87-DAC3-4B64-AA3E-8A4F0A6A46D8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OpenPassPlugin</RootNamespace>
-    <AssemblyName>OpenPassPlugin</AssemblyName>
+    <RootNamespace>OpenPass</RootNamespace>
+    <AssemblyName>OpenPass</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -30,9 +30,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="KeePass">
+      <HintPath>..\KeePass\Build\KeePass\Debug\KeePass.exe</HintPath>
+    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="OpenPassExt.cs" />
