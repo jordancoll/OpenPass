@@ -43,7 +43,6 @@ namespace OpenPass
             if (urlMenu == null)
             {
                 log.WriteLine("Couldn't find URL(s)");
-
                 return false;
             }
 
@@ -117,13 +116,21 @@ namespace OpenPass
         protected void OpenAndAutoType()
         {
             var entry = host.MainWindow.GetSelectedEntry(true);
+            string seq = entry.AutoType.DefaultSequence;
+            foreach (var association in entry.AutoType.Associations)
+            {
+                if (association.WindowName == ">OpenPass<")
+                {
+                    seq = association.Sequence;
+                }
+            }
+
             if (CanOpenAndType && entry != null)
             {
                 try
                 {
                     WinUtil.OpenEntryUrl(entry);
-                    //System.Threading.Thread.Sleep(1000);
-                    AutoType.PerformIntoCurrentWindow(entry, host.MainWindow.ActiveDatabase);
+                    AutoType.PerformIntoCurrentWindow(entry, host.MainWindow.ActiveDatabase, seq);
                 }
                 catch (Exception ex)
                 {
