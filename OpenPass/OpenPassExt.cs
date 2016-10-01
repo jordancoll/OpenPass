@@ -64,26 +64,21 @@ namespace OpenPass
             if (listView.Length != 1)
             {
                 log.WriteLine("Couldn't add keyboard shortcut, m_lvEntries count=" + listView.Length);
+                return;
             }
-            else
-            {
-                log.WriteLine("added keydown event");
-                listView[0].KeyDown +=
-                    delegate(object sender, KeyEventArgs e)
-                    {
-                        if (e.KeyData == (Keys.Control | Keys.Y))
-                        {
-                            OpenAndAutoType();
-                            e.Handled = true;
-                            e.SuppressKeyPress = true;
 
-                        }
-                        else
-                        {
-                            e.Handled = false;
-                        }
-                    };
-            }
+            log.WriteLine("added keydown event");
+            listView[0].KeyDown +=
+                delegate(object sender, KeyEventArgs e)
+                {
+                    if (e.KeyData == (Keys.Control | Keys.Y))
+                    {
+                        OpenAndAutoType();
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                    }
+                };
+
         }
 
         public override void Terminate()
